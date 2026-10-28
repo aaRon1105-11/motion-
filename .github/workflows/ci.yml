@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  validate:
+    name: Build & Typecheck
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+        node-version: [ 20.x ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install workspace dependencies
+        working-directory: workspace
+        run: npm ci
+
+      - name: Typecheck Electron & UI
+        run: npm run typecheck
+
+      - name: Typecheck Workspace Compositions
+        working-directory: workspace
+        run: npm run typecheck
+
+      - name: Build Electron & UI bundles
+        run: |
+          npx tsc -p tsconfig.electron.json
+          npx vite build

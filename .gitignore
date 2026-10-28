@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+workspace/node_modules/
+
+# Production build & packaging outputs
+dist/
+dist-electron/
+release/
+out/
+build/
+
+# Video renders & generated media
+*.mp4
+*.webm
+*.mov
+workspace/out/
+workspace/.remotion/
+
+# Dynamic workspace agent git repository
+workspace/.git/
+
+# Logs & debug traces
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# OS metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & editors
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.sublime-project
+*.sublime-workspace
