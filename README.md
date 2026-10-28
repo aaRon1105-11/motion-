@@ -2,25 +2,24 @@
 
 # ⚡ Motion Studio
 
-### Prompt-to-Motion-Graphics Desktop App & CLI Engine
+### Ultra-Lightweight Prompt-to-Motion-Graphics CLI Engine
 **Powered by Google Antigravity CLI (`agy`), Remotion & Three.js**
 
-[![Node.js Version](https://img.shields.io/badge/Node.js-v20+-green.svg)](https://nodejs.org)
-[![Electron](https://img.shields.io/badge/Electron-v30.5-47848F.svg?logo=electron&logoColor=white)](https://electronjs.org)
+[![Node.js Version](https://img.shields.io/badge/Node.js-v18+-green.svg)](https://nodejs.org)
 [![Remotion](https://img.shields.io/badge/Remotion-v4.0-0B84F3.svg)](https://remotion.dev)
 [![Three.js](https://img.shields.io/badge/Three.js-r160-black.svg?logo=three.js&logoColor=white)](https://threejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Footprint: Zero Bloat](https://img.shields.io/badge/Footprint-~20MB-brightgreen.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 <p align="center">
+  <a href="#-features">Features</a> •
   <a href="#-quick-start">Quick Start</a> •
-  <a href="#-the-core-loop">Core Loop</a> •
+  <a href="#-cli-reference">CLI Reference</a> •
   <a href="#-architecture">Architecture</a> •
-  <a href="#-cli-engine-motion">CLI Engine</a> •
-  <a href="#-3d-threejs-graphics">3D Three.js</a> •
   <a href="#-showcase-compositions">Compositions</a> •
-  <a href="#-executable-desktop-app">Desktop App</a>
+  <a href="#-contributing">Contributing</a>
 </p>
 
 </div>
@@ -29,111 +28,76 @@
 
 ## 💡 Overview
 
-**Motion Studio** transforms plain-English prompts into broadcast-quality, deterministic motion graphics and 3D WebGL animations.
+**Motion Studio** is a minimal, blazing-fast CLI engine that turns natural language prompts into production-ready motion graphics and 3D WebGL videos.
 
-1. **Type a Prompt** (e.g. *"A futuristic neon title card with glowing text and light wipe"*).
-2. **AI Writes Code** via Google's Antigravity CLI (`agy`) directly into an isolated workspace.
-3. **Automated Static Analysis** checks code with `tsc --noEmit`. If errors arise, the agent automatically attempts up to two self-repair cycles; if still failing, Git safely rolls back the workspace.
-4. **Instant Live Preview & Auto-Generated Controls** appear in Remotion Studio. Visual values (colors, text, speeds, wireframes) are defined by Zod schemas, letting you tweak the animation in real time without calling an AI model.
-5. **Headless MP4 Rendering** exports pristine 60fps/30fps videos via Chromium & FFmpeg with live percentage progress tracking.
+- **Zero Framework Bloat:** Stripped of heavy Electron/GUI runtimes — the entire orchestrator compiles in milliseconds to under 30KB of pure Node.js.
+- **Autonomous Agent Loop:** Spawns Google's Antigravity CLI (`agy`) directly in an isolated workspace with streaming NDJSON output.
+- **Self-Healing TypeScript:** Catches compile errors via `tsc --noEmit` and feeds compiler diagnostics back to the agent for automated repair (up to 2 retries).
+- **Git Safety Net:** Auto-commits working animations, cleans untracked code, and rolls back instantly (`git reset --hard & git clean -fd`) if validation fails.
+- **Three.js (3JS) 3D GPU Pipeline:** Deterministic 3D WebGL rendering powered by `@remotion/three` and `@react-three/fiber`.
+- **Pure Headless Rendering:** Exports pristine MP4s using Remotion's headless Chromium & FFmpeg pipeline with a real-time terminal progress bar.
 
 ---
 
-## 🔄 The Core Loop
+## 🔄 The Autonomous Loop
 
 ```mermaid
 flowchart TD
-    A["User Prompt (Desktop or CLI)"] --> B["Google Antigravity Agent (agy -p)"]
+    A["User Prompt (motion '<prompt>')"] --> B["Google Antigravity Agent (agy -p)"]
     B --> C["Writes Remotion / Three.js Code"]
     C --> D{"Typecheck (tsc --noEmit)"}
-    D -- "Errors Found (Attempt < 2)" --> E["Self-Repair Prompt fed back to agy"]
+    D -- "Errors Detected (Attempt < 2)" --> E["Self-Repair Diagnostics fed to agy"]
     E --> C
-    D -- "Still Broken after 2 retries" --> F["Git Rollback (git reset --hard & git clean -fd)"]
-    D -- "Passes Cleanly" --> G["Git Commit & Auto Hot-Reload"]
-    G --> H["Live Preview in Remotion Studio"]
-    H --> I["Tweak Sliders / Colors (Zero-AI Zod Controls)"]
-    I --> J["Export MP4 (Headless Chromium + FFmpeg)"]
+    D -- "Failed after 2 retries" --> F["Instant Git Rollback (git reset --hard)"]
+    D -- "Passes Cleanly" --> G["Git Commit to Workspace"]
+    G --> H{"--render flag?"}
+    H -- "Yes" --> I["Headless Remotion MP4 Render with Progress Bar"]
+    H -- "No" --> J["Ready for Preview (motion studio --open)"]
 
     style A fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#fff
     style B fill:#0f172a,stroke:#818cf8,stroke-width:2px,color:#fff
     style D fill:#1e1e24,stroke:#f59e0b,stroke-width:2px,color:#fff
     style G fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#fff
     style F fill:#7f1d1d,stroke:#ef4444,stroke-width:2px,color:#fff
-    style J fill:#1e3a8a,stroke:#60a5fa,stroke-width:2px,color:#fff
+    style I fill:#1e3a8a,stroke:#60a5fa,stroke-width:2px,color:#fff
 ```
 
 ---
 
-## 🏛️ Architecture
+## ⚡ CLI Reference
 
-Motion Studio enforces a strict separation between the desktop UI, the Node host, and the agent workspace:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User
-    participant UI as React Desktop Shell
-    participant Main as Electron Main Process
-    participant Agent as Google agy CLI Runner
-    participant Workspace as Isolated Workspace (Git)
-    participant Studio as Remotion Studio (Port 3010)
-
-    User->>UI: Enter prompt & frame range
-    UI->>Main: IPC agent:run (prompt, activeComposition)
-    Main->>Agent: Spawn agy native process (stream-json)
-    loop Stream Output
-        Agent-->>Main: JSON event chunk (init, tool_call, text)
-        Main-->>UI: IPC agent:event (live log streaming)
-    end
-    Agent->>Workspace: Edit / create composition TSX
-    Main->>Workspace: Run tsc --noEmit
-    alt TypeScript Errors
-        Main->>Agent: Re-run with error log (Max 2 retries)
-    else Clean
-        Main->>Workspace: git add -A & git commit -m "agent: prompt"
-        Workspace-->>Studio: File change triggers instant hot-reload
-        Main-->>UI: IPC agent:done (success: true)
-    end
-    User->>UI: Click "Export MP4"
-    UI->>Main: IPC render:start (compositionId, props)
-    Main->>Workspace: Spawn npx remotion render
-    Main-->>UI: IPC render:progress (percentage)
-    Main-->>UI: Return output MP4 path
-```
-
----
-
-## ⚡ CLI Engine (`motion`)
-
-Motion Studio includes a standalone terminal CLI wrapper that executes the complete generation, validation, and rendering loop without launching Electron:
+Run directly with `.\motion` (Windows batch wrapper) or `npm run motion --`:
 
 ```bash
-# Launch interactive Google CLI login & account check
+# 1. Interactive Google CLI login & account authentication
 .\motion login
 
-# Inspect CLI diagnostics, Node version, and workspace health
+# 2. Check environment diagnostics, agy binary path, and workspace health
 .\motion status
 
-# List all registered compositions
+# 3. List all registered compositions in the workspace
 .\motion list
 
-# Generate an animation from a prompt
+# 4. Generate an animation from a prompt
 .\motion "Create a vibrant lower third for Sarah Connor with title CTO"
 
-# Targeted edit with frame constraint
+# 5. Targeted edit with frame constraint
 .\motion -c TitleCard -f 0-45 "Change text to 'WELCOME' and primary color to cyan"
 
-# Generate AND immediately render to MP4 in one command
+# 6. Generate AND immediately render to MP4 in one command
 .\motion -r "Dynamic logo reveal with light wipe"
 
-# Render any composition headlessly with an ASCII progress bar
+# 7. Render any composition headlessly with an ASCII progress bar
 .\motion render ThreeDTorus
 .\motion render Countdown
 
-# Undo last generation commit
+# 8. Start Remotion Studio dev server (opens browser only if --open is passed)
+.\motion studio --open
+
+# 9. Undo last generation commit
 .\motion undo
 
-# View recent generation commits
+# 10. View recent generation commits
 .\motion history
 ```
 
@@ -145,7 +109,7 @@ Motion Studio includes a standalone terminal CLI wrapper that executes the compl
 
 ⚡ Rendering composition: ThreeDTorus to MP4...
 
-  [██════════════════════════════] 100%
+  [██████████████████████████████] 100%
 
 ✅ Render Complete!
   Output file: workspace/out/ThreeDTorus.mp4
@@ -155,13 +119,13 @@ Motion Studio includes a standalone terminal CLI wrapper that executes the compl
 
 ## 🪐 3D Three.js Graphics
 
-Motion Studio features first-class **Three.js (3JS)** integration via `@remotion/three` and `@react-three/fiber`:
+Motion Studio features first-class **Three.js (3JS)** integration:
 
 - **Deterministic GPU WebGL:** Camera movements, geometry transformations, and lighting uniforms are computed strictly as mathematical functions of `useCurrentFrame()`.
 - **Pre-Bundled 3D Compositions:**
   - **`ThreeDTorus`**: Metallic 3D Torus Knot with dynamic point lights, glowing outer wireframe cage, and physics-based entrance.
   - **`ThreeDCubeGrid`**: Futuristic floating cyber prism cube with glowing emissive core, counter-orbiting gyroscope rings, and real-time HUD coordinates.
-- **Full Inspector Control:** Adjust wireframe mode, metallic roughness, rotation speeds, and color schemes via live sliders.
+- **Interactive Zod Controls:** Adjust wireframe mode, metallic roughness, rotation speeds, and color schemes via typed parameters.
 
 ---
 
@@ -169,7 +133,7 @@ Motion Studio features first-class **Three.js (3JS)** integration via `@remotion
 
 | Composition | Type | Description | Key Zod Controls |
 | :--- | :---: | :--- | :--- |
-| **`TitleCard`** | 2D | Sleek cinematic title card with smooth fade & spring translate | `title`, `subtitle`, `primaryColor`, `accentColor`, `fontSize` |
+| **`TitleCard`** | 2D | Cinematic title card with smooth fade & spring translate | `title`, `subtitle`, `primaryColor`, `accentColor`, `fontSize` |
 | **`LowerThird`** | 2D | Broadcast-style lower-third banner sliding from the left | `name`, `title`, `barColor`, `textColor`, `slideDuration` |
 | **`KineticText`** | 2D | Staggered pop-in kinetic typography using spring physics | `words`, `primaryColor`, `accentColor`, `staggerDelay` |
 | **`LogoReveal`** | 2D | Futuristic horizontal light wipe with scale branding | `brandName`, `glowColor`, `accentColor`, `scaleFrom` |
@@ -183,56 +147,29 @@ Motion Studio features first-class **Three.js (3JS)** integration via `@remotion
 
 ### 1. Prerequisites
 - [Node.js](https://nodejs.org) v18.0.0 or higher (v20+ recommended)
-- [Google Antigravity CLI (`agy`)](https://antigravity.google) (Run `agy` or `.\motion login` once to authenticate)
+- [Google Antigravity CLI (`agy`)](https://antigravity.google) (Run `.\motion login` once to authenticate)
 - [Git](https://git-scm.com) installed and in your PATH
 
 ### 2. Installation
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/motion-studio.git
-cd motion-studio
+# Clone repository
+git clone https://github.com/aaRon1105-11/motion-.git
+cd motion-
 
-# Install root dependencies
+# Install root dependencies (ultra-lightweight, takes ~3s)
 npm install
 
-# Install workspace dependencies
+# Install workspace Remotion & Three.js dependencies
 cd workspace && npm install && cd ..
+
+# Build CLI TypeScript
+npm run build
 ```
 
-### 3. Launch Development Mode
+### 3. Generate Your First Animation
 ```bash
-# Start both Vite UI dev server and Electron main process with live hot-reload
-npm run dev
+.\motion "Create a cinematic title card with bold text 'NEXT GEN MOTION'"
 ```
-
----
-
-## 📦 Executable Desktop App
-
-You can build and run standalone Windows `.exe` executables:
-
-- **1-Click Quick Launcher:** Double-click [`Launch-Motion-Studio.cmd`](Launch-Motion-Studio.cmd) to immediately boot the unpacked binary.
-- **Standalone Portable EXE:** Run `npm run build:exe` to produce a single-file `.exe` in `release/` that runs without installation.
-- **Windows Setup Installer:** Generates a full NSIS installer package.
-
-```bash
-# Package the unpacked directory
-npm run build:dir
-
-# Package portable executable and NSIS installer
-npm run build:exe
-```
-
----
-
-## 📜 Agent Rulebook (`AGENTS.md`)
-
-The agent is bound by strict contracts defined in [`workspace/AGENTS.md`](workspace/AGENTS.md):
-
-1. **Operating Boundaries:** The agent may only create or modify files inside `src/compositions/` and register them in `src/Root.tsx`.
-2. **Deterministic Rendering:** No non-deterministic functions allowed (`Math.random()`, `Date.now()`, `setTimeout()`, CSS transitions, or `THREE.Clock.getElapsedTime()`).
-3. **Zod Schema Contract:** Every visual property (colors, text, speeds) must be exposed via a Zod schema and `defaultProps` so the UI can auto-generate controls.
-4. **Frame Range Targeting:** When a prompt specifies `[Only affect frames A-B]`, the agent only modifies the `<Sequence />` covering that window.
 
 ---
 
@@ -243,23 +180,13 @@ motion-studio/
 ├── .github/
 │   ├── workflows/ci.yml       # GitHub Actions automated build & typecheck CI
 │   └── ISSUE_TEMPLATE/        # Standardized bug report & feature request templates
-├── electron/
-│   ├── main.ts                # Electron window lifecycle, Studio runner, IPC handlers
-│   ├── preload.ts             # Secure contextBridge API for the UI
-│   ├── agent.ts               # Spawns agy native process with JSON event streaming
+├── src/
 │   ├── cli.ts                 # Standalone terminal CLI engine
+│   ├── agent.ts               # Spawns agy native process with JSON event streaming
 │   ├── validate.ts            # TypeScript compiler validator (tsc --noEmit)
 │   ├── render.ts              # Headless Remotion MP4 export with progress parser
 │   ├── studio.ts              # Remotion Studio server runner (--no-open)
 │   └── git.ts                 # Git safety net (auto-init, commit, rollback, undo)
-├── ui/
-│   ├── src/
-│   │   ├── components/        # PromptPanel, LogPanel, StudioView, ExportButton, StatusBar
-│   │   ├── styles/            # Dark-mode UI styling and layout CSS
-│   │   ├── types/             # Typed IPC interface definitions
-│   │   └── App.tsx            # Main application UI container
-│   ├── index.html             # UI HTML shell with webview support
-│   └── vite.config.ts         # Vite bundler configuration
 ├── workspace/                 # Remotion project workspace (agent playground)
 │   ├── AGENTS.md              # Strict agent rulebook & determinism contracts
 │   ├── remotion.config.ts     # Video rendering options
@@ -269,11 +196,12 @@ motion-studio/
 │       ├── Root.tsx           # Composition registry
 │       ├── index.ts           # Remotion entrypoint
 │       └── compositions/      # 2D & 3D Three.js composition templates
-├── Launch-Motion-Studio.cmd   # 1-click Windows desktop launcher
 ├── motion.cmd                 # 1-click Windows CLI wrapper
+├── Push-To-GitHub.cmd         # 1-click GitHub push launcher
 ├── CONTRIBUTING.md            # Guidelines for open-source contributors
 ├── LICENSE                    # MIT License
-└── package.json               # Root scripts, build targets & dependencies
+├── package.json               # Lightweight root scripts & dev dependencies
+└── tsconfig.json              # TypeScript compilation config
 ```
 
 ---

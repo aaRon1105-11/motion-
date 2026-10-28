@@ -32,14 +32,12 @@ jobs:
         working-directory: workspace
         run: npm ci
 
-      - name: Typecheck Electron & UI
+      - name: Typecheck CLI Engine
         run: npm run typecheck
 
       - name: Typecheck Workspace Compositions
         working-directory: workspace
         run: npm run typecheck
 
-      - name: Build Electron & UI bundles
-        run: |
-          npx tsc -p tsconfig.electron.json
-          npx vite build
+      - name: Build CLI Engine
+        run: npm run build

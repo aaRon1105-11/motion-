@@ -1,74 +1,34 @@
 {
   "name": "motion-studio",
-  "version": "0.1.0",
-  "description": "Prompt-to-motion-graphics desktop app powered by agy + Remotion",
-  "main": "dist-electron/main.js",
+  "version": "0.2.0",
+  "description": "Lightweight prompt-to-motion-graphics CLI engine powered by Google Antigravity CLI (agy) and Remotion",
+  "main": "dist/cli.js",
+  "bin": {
+    "motion": "dist/cli.js"
+  },
   "scripts": {
-    "start": "tsc -p tsconfig.electron.json && vite build && electron .",
-    "dev": "concurrently \"npm run dev:electron\" \"npm run dev:ui\"",
-    "dev:ui": "vite",
-    "dev:electron": "tsc -p tsconfig.electron.json && electron .",
-    "build": "tsc -p tsconfig.electron.json && vite build && electron-builder",
-    "build:exe": "tsc -p tsconfig.electron.json && vite build && electron-builder --win",
-    "build:dir": "tsc -p tsconfig.electron.json && vite build && electron-builder --win --dir",
-    "motion": "tsc -p tsconfig.electron.json && node dist-electron/cli.js",
-    "cli": "node dist-electron/cli.js",
-    "workspace:init": "node scripts/init-workspace.js",
-    "typecheck": "tsc --noEmit"
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "motion": "node dist/cli.js",
+    "studio": "node dist/cli.js studio --open",
+    "render": "node dist/cli.js render",
+    "typecheck": "tsc --noEmit",
+    "workspace:init": "node scripts/init-workspace.js"
   },
-  "dependencies": {
-    "@react-three/fiber": "^8.18.0",
-    "@remotion/cli": "^4.0.0",
-    "@remotion/player": "^4.0.0",
-    "@remotion/three": "^4.0.539",
-    "@types/three": "^0.160.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "remotion": "^4.0.0",
-    "three": "^0.160.1",
-    "zod": "^3.22.4"
-  },
+  "keywords": [
+    "motion-graphics",
+    "remotion",
+    "threejs",
+    "antigravity",
+    "ai",
+    "cli",
+    "video-generator"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "@vitejs/plugin-react": "^4.2.0",
-    "concurrently": "^8.2.2",
-    "electron": "^30.0.0",
-    "electron-builder": "^24.0.0",
-    "typescript": "^5.3.0",
-    "vite": "^5.0.0"
-  },
-  "build": {
-    "appId": "com.motion.studio",
-    "productName": "Motion Studio",
-    "compression": "normal",
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/**/*",
-      "dist-electron/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "workspace",
-        "to": "workspace",
-        "filter": [
-          "!out/*.mp4"
-        ]
-      }
-    ],
-    "win": {
-      "target": [
-        "portable",
-        "nsis"
-      ]
-    },
-    "nsis": {
-      "oneClick": false,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": true
-    }
+    "typescript": "^5.3.0"
   }
 }

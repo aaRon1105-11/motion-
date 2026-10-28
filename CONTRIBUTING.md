@@ -21,20 +21,22 @@ cd workspace && npm install && cd ..
 
 ### Running Locally
 ```bash
-# Launch Electron desktop app in live hot-reload development mode
-npm run dev
+# Build the TypeScript CLI
+npm run build
 
-# Or test via the lightweight CLI wrapper directly in your terminal
+# Run the CLI
 npm run motion -- "Create a title card with glowing text"
+
+# Or use the global / local launcher
+.\motion "Create a title card with glowing text"
 ```
 
 ---
 
 ## 2. Architecture Guidelines
 
-Motion Studio follows a strict separation of concerns:
-- `electron/`: Main process orchestrator, native process spawning, IPC handlers, git rollback manager.
-- `ui/`: React + Vite frontend. **Zero Node.js access**; all OS operations travel strictly through `window.motionStudio` via Electron `contextBridge`.
+Motion Studio follows a lightweight, modular CLI architecture:
+- `src/`: Pure Node.js CLI orchestrator (native process spawning, agent runner, git safety net, headless rendering, Remotion Studio server).
 - `workspace/`: Isolated Remotion workspace where the agent writes code. The workspace has its own internal git repository used as an undo/rollback buffer.
 
 ---
@@ -68,7 +70,7 @@ When contributing new compositions to `workspace/src/compositions/`:
 Before opening a pull request, verify that all static analysis and compilation tests pass:
 
 ```bash
-# Typecheck desktop app and UI
+# Typecheck CLI engine
 npm run typecheck
 
 # Typecheck workspace compositions
